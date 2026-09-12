@@ -3,17 +3,20 @@
 ## Business question
 Which metro stations have the largest demand-attainment gaps and strongest last-mile growth opportunities?
 
-## 01 — Excel
-Clean station-quarter records, validate projected vs actual ridership, calculate attainment gaps and review last-mile/fare-sensitivity patterns.
+## 01 — Excel — mandatory first pass
+Clean station-quarter records, reconcile projected vs actual ridership, validate fields, use formulas/pivots, calculate attainment gaps and identify station exceptions.
 
-## 02 — SQL
-Produce corridor and station KPIs, demand-attainment rankings, last-mile opportunity scores and exception queues.
+## 02 — Python (Pandas + NumPy) — optional
+Use Python for larger EDA, station segmentation, outlier checks, repeatable transformations and sensitivity analysis where it adds value.
 
-## 03 — Power BI
-Build: Ridership Executive → Corridor Performance → Station Opportunity → Growth Scenario. Use corridor, station, quarter and mobility-segment slicers.
+## 03 — SQL — mandatory analytical layer
+Use joins, CTEs, aggregations and window functions for corridor KPIs, station rankings, peer benchmarks, attainment trends and opportunity queues.
 
-## 04 — Decision
-Recommend feeder, catchment and commercial interventions for stations with the best opportunity-to-gap combination.
+## 04 — Power BI — mandatory decision interface
+Build the model, DAX measures, slicers and drill-through: Ridership Executive → Corridor Performance → Station Opportunity → Growth Scenario.
+
+## 05 — Decision — mandatory outcome
+Recommend feeder, catchment, fare or commercial actions with priority, owner, expected ridership impact and decision assumptions.
 
 ## Acceptance criteria
-Projected and actual ridership reconcile to source records; attainment is consistently defined; synthetic data is labelled as portfolio data.
+Projected and actual totals reconcile; attainment definitions are consistent; assumptions are documented; synthetic data is clearly labelled as portfolio data.
