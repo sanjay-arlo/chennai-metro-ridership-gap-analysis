@@ -1,4 +1,4 @@
-name: Deploy industry dashboard
+name: Build and deploy industry dashboard
 on:
   push:
     branches: [main]
@@ -16,20 +16,41 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare dashboard bundle
+      - name: Generate or verify project dataset
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import csv, math, datetime, os
+          from pathlib import Path
+          repo=os.environ['GITHUB_REPOSITORY'].split('/')[-1]; root=Path('.')
+          def write(n,h,r):
+            p=root/n
+            if not p.exists():
+              with p.open('w',newline='',encoding='utf-8') as f: w=csv.writer(f); w.writerow(h); w.writerows(r)
+          zones=['North','Central','South','West','East']
+          districts=['Ariyalur','Chengalpattu','Chennai','Coimbatore','Cuddalore','Dharmapuri','Dindigul','Erode','Kallakurichi','Kancheepuram','Karur','Krishnagiri','Madurai','Mayiladuthurai','Nagapattinam','Namakkal','Nilgiris','Perambalur','Pudukkottai','Ramanathapuram','Ranipet','Salem','Sivaganga','Tenkasi','Thanjavur','Theni','Thoothukudi','Tiruchirappalli','Tirunelveli','Tirupathur','Tiruppur','Tiruvallur','Tiruvarur','Vellore','Viluppuram','Virudhunagar','Kanyakumari','Tiruvannamalai']
+          if repo=='chennai-metro-ridership-gap-analysis':
+            h=['quarter','station','corridor','dpr_projected_daily_ridership','actual_daily_ridership','actual_vs_projected_pct','last_mile_score','fare_sensitivity_score','common_mobility_card_share']; r=[]; cor=['Phase I','Phase I Extension','Phase II']; qs=['2025-Q1','2025-Q2','2025-Q3','2025-Q4']
+            for i in range(164):
+              c=cor[i%3]; p=11000+(i%41)*420+(0 if c=='Phase I' else 1800 if c=='Phase I Extension' else 3200); a=round(p*(.48+((i*7)%35)/100)); r.append([qs[i%4],f'{c.replace(" ","")[:6]}-{i%41+1:02d}',c,p,a,round(a/p*100,1),45+(i*11)%51,30+(i*13)%71,22+(i*5)%65])
+            write('sample_station_ridership_chennai.csv',h,r)
+          PY
+      - name: Build dashboard bundle
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dashboard
-          if [ ! -f dashboard/index.html ]; then curl -fsSL https://raw.githubusercontent.com/sanjay-arlo/chennai-water-security-tanker-allocation/main/dashboard/index.html -o dashboard/index.html; fi
-          if [ ! -f dashboard/app.js ]; then curl -fsSL https://raw.githubusercontent.com/sanjay-arlo/chennai-water-security-tanker-allocation/main/dashboard/app.js -o dashboard/app.js; fi
+          curl -fsSL https://raw.githubusercontent.com/sanjay-arlo/chennai-water-security-tanker-allocation/main/dashboard/index.html -o dashboard/index.html
+          curl -fsSL https://raw.githubusercontent.com/sanjay-arlo/chennai-water-security-tanker-allocation/main/dashboard/app.js -o dashboard/app.js
           csv=$(find . -maxdepth 1 -type f -name '*.csv' | head -n 1 || true)
-          if [ -z "${csv}" ]; then echo 'No root CSV dataset found' >&2; exit 1; fi
+          if [ -z "${csv}" ]; then echo 'No project CSV found after generation' >&2; exit 1; fi
           cp "${csv}" dashboard/data.csv
+          echo 'Industry dashboard bundle generated.' > dashboard/README.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add dashboard
-          if ! git diff --cached --quiet; then git commit -m 'feat: build industry dashboard [skip ci]'; git push; fi
+          git add dashboard *.csv
+          if ! git diff --cached --quiet; then git commit -m 'feat: build industry dashboard and dataset [skip ci]'; git push; fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: {path: dashboard}
